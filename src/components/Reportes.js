@@ -30,7 +30,7 @@ export default function Reportes() {
       console.error("Error cargando métricas:", err);
       setError(
         err.response?.data?.message ||
-          "Error al conectar con el servicio de análisis. Verifica que MCP esté corriendo en puerto 8080."
+          "Error al conectar con el servicio de análisis."
       );
     } finally {
       if (!silent) setLoading(false);
@@ -45,6 +45,15 @@ export default function Reportes() {
     if (seconds < 3600) return `Hace ${Math.floor(seconds / 60)} minutos`;
     if (seconds < 86400) return `Hace ${Math.floor(seconds / 3600)} horas`;
     return `Hace ${Math.floor(seconds / 86400)} días`;
+  };
+
+  // ⭐ NUEVA FUNCIÓN: Verificar si las métricas del sistema están disponibles
+  const hasSystemMetrics = () => {
+    return (
+      metrics?.systemMetrics?.cpu_usage !== "N/A" &&
+      metrics?.systemMetrics?.memory_available !== "N/A" &&
+      metrics?.systemMetrics?.disk_usage !== "N/A"
+    );
   };
 
   if (loading) {
@@ -113,26 +122,12 @@ export default function Reportes() {
           <h2>No se pudo conectar con MCP</h2>
           <p>{error}</p>
           <div className="error-details">
-            <h3>🔧 Pasos para solucionar:</h3>
-            <ol>
-              <li>
-                Abre una terminal en la carpeta <code>mcp-aiops</code>
-              </li>
-              <li>
-                Ejecuta:{" "}
-                <code>
-                  docker-compose -f docker-compose.monitoring.yml up -d
-                </code>
-              </li>
-              <li>
-                Verifica que esté corriendo: <code>docker ps | grep mcp</code>
-              </li>
-              <li>
-                Prueba el health check:{" "}
-                <code>curl http://localhost:8080/health</code>
-              </li>
-              <li>Recarga esta página</li>
-            </ol>
+            <h3>🔧 Verifica la conexión:</h3>
+            <ul>
+              <li>El servicio MCP debe estar activo en Render</li>
+              <li>Revisa los logs en el dashboard de Render</li>
+              <li>Verifica que las variables de entorno estén configuradas</li>
+            </ul>
           </div>
         </div>
         <style jsx>{`
@@ -210,7 +205,7 @@ export default function Reportes() {
             color: #e50914;
             margin-bottom: 16px;
           }
-          .error-details ol {
+          .error-details ul {
             padding-left: 24px;
           }
           .error-details li {
@@ -218,14 +213,6 @@ export default function Reportes() {
             color: #ddd;
             font-size: 14px;
             line-height: 1.6;
-          }
-          .error-details code {
-            background: #2a2a2a;
-            padding: 4px 8px;
-            border-radius: 4px;
-            color: #e50914;
-            font-family: monospace;
-            font-size: 13px;
           }
         `}</style>
       </div>
@@ -237,7 +224,7 @@ export default function Reportes() {
       <div className="page-header-small">
         <div>
           <h1>📊 Reportes y Análisis</h1>
-          <p className="subtitle">Métricas en Tiempo Real (SIN IA)</p>
+          <p className="subtitle">Métricas en Tiempo Real del Taller</p>
         </div>
         <button
           className="btn-primary"
@@ -294,7 +281,7 @@ export default function Reportes() {
 
       <div className="metrics-grid">
         {/* MÉTRICAS DE NEGOCIO */}
-        <div className="metrics-section">
+        <div className="metrics-section full-width">
           <h3>📈 Métricas de Negocio</h3>
           <div className="metrics-list">
             <div className="metric-row">
@@ -324,30 +311,32 @@ export default function Reportes() {
           </div>
         </div>
 
-        {/* MÉTRICAS DEL SISTEMA */}
-        <div className="metrics-section">
-          <h3>💻 Métricas del Sistema</h3>
-          <div className="metrics-list">
-            <div className="metric-row">
-              <span className="metric-label">Uso de CPU</span>
-              <span className="metric-value">
-                {metrics.systemMetrics?.cpu_usage || "N/A"}
-              </span>
-            </div>
-            <div className="metric-row">
-              <span className="metric-label">Memoria Disponible</span>
-              <span className="metric-value">
-                {metrics.systemMetrics?.memory_available || "N/A"}
-              </span>
-            </div>
-            <div className="metric-row">
-              <span className="metric-label">Uso de Disco</span>
-              <span className="metric-value">
-                {metrics.systemMetrics?.disk_usage || "N/A"}
-              </span>
+        {/* ⭐ MÉTRICAS DEL SISTEMA - SOLO SI ESTÁN DISPONIBLES */}
+        {hasSystemMetrics() && (
+          <div className="metrics-section">
+            <h3>💻 Métricas del Sistema</h3>
+            <div className="metrics-list">
+              <div className="metric-row">
+                <span className="metric-label">Uso de CPU</span>
+                <span className="metric-value">
+                  {metrics.systemMetrics?.cpu_usage}
+                </span>
+              </div>
+              <div className="metric-row">
+                <span className="metric-label">Memoria Disponible</span>
+                <span className="metric-value">
+                  {metrics.systemMetrics?.memory_available}
+                </span>
+              </div>
+              <div className="metric-row">
+                <span className="metric-label">Uso de Disco</span>
+                <span className="metric-value">
+                  {metrics.systemMetrics?.disk_usage}
+                </span>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* FOOTER */}
@@ -499,6 +488,10 @@ export default function Reportes() {
           border-radius: 16px;
           padding: 32px;
           animation: slideUp 0.6s ease;
+        }
+        /* ⭐ Si solo hay métricas de negocio, ocupar todo el ancho */
+        .metrics-section.full-width {
+          grid-column: 1 / -1;
         }
         .metrics-section h3 {
           font-size: 20px;
