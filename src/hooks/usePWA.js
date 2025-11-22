@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 export function usePWA() {
   const [isInstallable, setIsInstallable] = useState(false);
@@ -12,22 +12,22 @@ export function usePWA() {
       setIsInstallable(true);
     };
 
-    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
-    window.addEventListener('online', () => setIsOnline(true));
-    window.addEventListener('offline', () => setIsOnline(false));
+    window.addEventListener("beforeinstallprompt", handleBeforeInstall);
+    window.addEventListener("online", () => setIsOnline(true));
+    window.addEventListener("offline", () => setIsOnline(false));
 
     return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstall);
     };
   }, []);
-
+  // Función para iniciar la instalación de la PWA
   const installPWA = async () => {
     if (!deferredPrompt) return false;
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     setDeferredPrompt(null);
     setIsInstallable(false);
-    return outcome === 'accepted';
+    return outcome === "accepted";
   };
 
   return { isInstallable, isOnline, installPWA };
